@@ -1,19 +1,27 @@
-Flutter Teacher App projesinde aşağıdaki düzenlemeleri yap:
+Flutter Teacher App projesinde "Kurslarım" modülünde aşağıdaki geliştirmeleri yap:
 
-1. Sidebar Menu > "Kurslarım" altındaki:
-   - "Kurslar" menüsünü "Kurs Oluştur" olarak değiştir
-   - "Derslerim" menüsünü "Kurslarım" olarak değiştir
-   - Tüm route, navigation ve label referanslarını buna göre güncelle
+1. 2. Sidebar (Course Sidebar) yapısını güncelle:
+   - Üstte "Kategoriler" adlı bir ana menü (folder) oluştur
+   - Bu menü expandable (Dropdown) yapıda olsun
 
-2. Kurs oluşturma (Create Course) akışında:
-   - İlk adımda bulunan "Ders / Branş" alanını zorunlu kategori alanı yap
-   - Girilen değeri course modeline "category" olarak kaydet
+2. Kategori yapısı:
+   - Kurs oluşturma adımındaki "Ders / Branş" alanını course modelinde "category" olarak kullan
+   - Tüm kursları bu "category" alanına göre grupla
+   - Her benzersiz category değeri, "Kategoriler" altında bir alt klasör olarak listelensin
+   - Bu alt klasörler de expandable (Dropdown) olsun
 
-3. Kursların listelendiği ekranda:
-   - Tüm kursları "category" alanına göre grupla
-   - Aynı kategoriye sahip kursları tek başlık altında listele
-   - Örnek: "Türkçe", "Matematik" gibi dinamik kategori başlıkları oluştur
+3. İçerik hiyerarşisi:
+   - Kategori (örn: Türkçe, Matematik)
+       → Altında o kategoriye ait kurslar listelensin
+       → Kursa tıklanınca mevcut yapıdaki gibi kurs detay sayfası açılsın
 
-4. Bu yapı:
-   - Local state veya mevcut backend ile çalışsın
-   - Ek servis, on-demand usage veya external dependency kullanılmasın
+4. UI davranışı:
+   - Expand/Collapse state local state ile yönetilsin
+   - Aynı anda birden fazla kategori açık olabilir
+   - Boş kategori gösterilmesin
+   - Liste dinamik olarak güncellensin (yeni kurs eklenince otomatik yansısın)
+
+5. Teknik:
+   - Ek servis veya on-demand yapı kullanma
+   - Mevcut state management yapısını kullan (Provider / Riverpod / setState ne varsa)
+   - Sidebar componentini reusable ve scalable olacak şekilde refactor et

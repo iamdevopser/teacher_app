@@ -7,6 +7,4 @@ import 'app_localizations.dart';
 /// The translations for Romanian Moldavian Moldovan (`ro`).
 class AppLocalizationsRo extends AppLocalizations {
   AppLocalizationsRo([String locale = 'ro']) : super(locale);
-
-
 }

@@ -11,8 +11,8 @@ import '../../data/models/course_models.dart';
 import 'course_color_dialog.dart';
 import 'course_detail_screen.dart';
 import 'course_wizard_controller.dart';
+import 'course_category_sidebar.dart';
 import 'course_wizard_screen.dart';
-import '../lesson_planner/planner_split_view.dart';
 
 /// Kurs oluşturma girişi — kurs listesi (kategoriye göre gruplu), oluşturma ve detay
 class CoursesScreen extends StatefulWidget {
@@ -122,42 +122,80 @@ class _CoursesScreenState extends State<CoursesScreen> {
                 if (FeatureFlags.courseSearchFilter)
                   _buildSearchFilter(context, allClasses, allCategories),
                 Expanded(
-                  child: PlannerSplitView(
-                    emptyState: filtered.isNotEmpty
-                        ? _buildSidebarPlaceholder(context)
-                        : null,
-                    onClosePanel: _selectedCourse != null
-                        ? () => setState(() => _selectedCourse = null)
-                        : null,
-                    sidePanel: _selectedCourse != null
-                        ? _buildCoursePanel(
-                            context,
-                            _selectedCourse!,
-                            repo,
-                            profile?.schoolName ?? '',
-                            localeCode,
-                          )
-                        : null,
-                    content: filtered.isEmpty
-                        ? Center(
-                            child: Text(
-                              courses.isEmpty
-                                  ? context.tr('noCoursesYet')
-                                  : context.tr('courseNoMatching'),
-                            ),
-                          )
-                        : ListView(
-                            padding: const EdgeInsets.all(16),
-                            children: _buildCoursesGroupedByCategory(
-                              context,
-                              filtered,
-                              profile?.schoolName ?? '',
-                              localeCode,
-                              repo,
-                              isWide,
-                            ),
+                  child: filtered.isEmpty
+                      ? Center(
+                          child: Text(
+                            courses.isEmpty
+                                ? context.tr('noCoursesYet')
+                                : context.tr('courseNoMatching'),
                           ),
-                  ),
+                        )
+                      : isWide
+                          ? Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                CourseCategorySidebar(
+                                  width: 300,
+                                  filteredCourses: filtered,
+                                  selectedCourseId: _selectedCourse?.id,
+                                  isWide: true,
+                                  onCourseTap: (c) =>
+                                      setState(() => _selectedCourse = c),
+                                  leadingBuilder: (ctx, c) =>
+                                      _buildCourseLeading(ctx, c, repo),
+                                  subtitleBuilder: (c) =>
+                                      '${profile?.schoolName ?? ''} • ${c.status.label(localeCode)}',
+                                  onMenuAction: (action, c) =>
+                                      _onCourseAction(context, action, c, repo),
+                                  menuItemsBuilder: (ctx, c) =>
+                                      _buildCourseMenuItems(ctx, c),
+                                ),
+                                const VerticalDivider(width: 1),
+                                Expanded(
+                                  child: _selectedCourse == null
+                                      ? _buildSidebarPlaceholder(context)
+                                      : Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.stretch,
+                                          children: [
+                                            Align(
+                                              alignment: Alignment.centerRight,
+                                              child: IconButton(
+                                                icon: const Icon(Icons.close),
+                                                onPressed: () => setState(
+                                                  () => _selectedCourse = null,
+                                                ),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              child: _buildCoursePanel(
+                                                context,
+                                                _selectedCourse!,
+                                                repo,
+                                                profile?.schoolName ?? '',
+                                                localeCode,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                ),
+                              ],
+                            )
+                          : CourseCategorySidebar(
+                              filteredCourses: filtered,
+                              isWide: false,
+                              onCourseTap: (_) {},
+                              onCourseTapMobile: (c) =>
+                                  _openCourseDetail(context, c),
+                              leadingBuilder: (ctx, c) =>
+                                  _buildCourseLeading(ctx, c, repo),
+                              subtitleBuilder: (c) =>
+                                  '${profile?.schoolName ?? ''} • ${c.status.label(localeCode)}',
+                              onMenuAction: (action, c) =>
+                                  _onCourseAction(context, action, c, repo),
+                              menuItemsBuilder: (ctx, c) =>
+                                  _buildCourseMenuItems(ctx, c),
+                            ),
                 ),
               ],
             ),
@@ -167,89 +205,6 @@ class _CoursesScreenState extends State<CoursesScreen> {
         child: const Icon(Icons.add),
       ),
     );
-  }
-
-  /// Kategoriye göre gruplu liste: başlık + kurs kartları.
-  List<Widget> _buildCoursesGroupedByCategory(
-    BuildContext context,
-    List<Course> filtered,
-    String schoolName,
-    String localeCode,
-    AppRepository repo,
-    bool isWide,
-  ) {
-    final map = <String, List<Course>>{};
-    for (final c in filtered) {
-      final key = c.effectiveCategory.isEmpty ? '' : c.effectiveCategory;
-      map.putIfAbsent(key, () => []).add(c);
-    }
-    final keys = map.keys.toList()
-      ..sort((a, b) {
-        if (a.isEmpty && b.isNotEmpty) return 1;
-        if (b.isEmpty && a.isNotEmpty) return -1;
-        return a.compareTo(b);
-      });
-
-    final children = <Widget>[];
-    for (final key in keys) {
-      final title = key.isEmpty
-          ? context.tr('courseCategoryOther')
-          : key;
-      children.add(
-        Padding(
-          padding: EdgeInsets.only(
-            top: children.isEmpty ? 0 : 16,
-            bottom: 8,
-          ),
-          child: Text(
-            title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-        ),
-      );
-      for (final course in map[key]!) {
-        final isSelected = _selectedCourse?.id == course.id;
-        children.add(
-          Card(
-            margin: const EdgeInsets.only(bottom: 8),
-            color: isSelected
-                ? Theme.of(context)
-                    .colorScheme
-                    .primaryContainer
-                    .withValues(alpha: 0.35)
-                : null,
-            child: ListTile(
-              leading: _buildCourseLeading(context, course, repo),
-              title: Text(course.displayName),
-              subtitle: Text(
-                '$schoolName • ${course.status.label(localeCode)}',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              trailing: isWide
-                  ? const Icon(Icons.chevron_right)
-                  : PopupMenuButton<String>(
-                      icon: const Icon(Icons.more_vert),
-                      onSelected: (v) =>
-                          _onCourseAction(context, v, course, repo),
-                      itemBuilder: (_) =>
-                          _buildCourseMenuItems(context, course),
-                    ),
-              onTap: () async {
-                if (course.status == CourseStatus.archived) return;
-                if (isWide) {
-                  setState(() => _selectedCourse = course);
-                  return;
-                }
-                await _openCourseDetail(context, course);
-              },
-            ),
-          ),
-        );
-      }
-    }
-    return children;
   }
 
   Widget _buildSearchFilter(
