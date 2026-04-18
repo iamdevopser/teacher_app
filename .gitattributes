@@ -1,0 +1,17 @@
+# Tutarli satir sonlari (Flutter / coklu platform); Windows'ta "LF will be replaced by CRLF" uyarisini azaltir.
+* text=auto
+
+*.dart   text eol=lf
+*.yaml   text eol=lf
+*.yml    text eol=lf
+*.md     text eol=lf
+*.sh     text eol=lf
+*.gradle text eol=lf
+*.kts    text eol=lf
+*.xml    text eol=lf
+*.properties text eol=lf
+*.cmake  text eol=lf
+*.cc     text eol=lf
+*.h      text eol=lf
+*.swift  text eol=lf
+*.ps1    text eol=crlf
