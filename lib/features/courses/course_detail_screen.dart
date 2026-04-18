@@ -263,7 +263,9 @@ class CourseDetailScreen extends StatelessWidget {
     final repo = context.read<AppProvider>().repo;
     final lessons = repo
         .getLessonsByDate(DateTime.now())
-        .where((l) => l.classId == course.classId && l.subject == course.subject)
+        .where((l) =>
+            l.classId == course.classId &&
+            l.subject == course.effectiveCategory)
         .toList();
 
     return Scaffold(

@@ -56,7 +56,21 @@ class _CourseWizardScreenState extends State<CourseWizardScreen>
   }
 
   void _next() {
-    if (_controller.step < 2) _controller.setStep(_controller.step + 1);
+    final step = _controller.step;
+    if (step == 0) {
+      final c = _controller.course;
+      final cat = c.effectiveCategory;
+      if (cat.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.tr('courseCategoryRequired'))),
+        );
+        return;
+      }
+      if (c.category.trim() != cat || c.subject.trim() != cat) {
+        _controller.setCourse(c.copyWith(category: cat, subject: cat));
+      }
+    }
+    if (step < 2) _controller.setStep(step + 1);
   }
 
   void _prev() {
@@ -205,10 +219,12 @@ class _Step1BasicInfo extends StatelessWidget {
           onChanged: (v) => onChanged(course.copyWith(teacherName: v.isEmpty ? null : v)),
         ),
         _LtrTextField(
-          label: context.tr('subject'),
-          value: course.subject,
-          hint: context.tr('hintSubject'),
-          onChanged: (v) => onChanged(course.copyWith(subject: v)),
+          label: context.tr('courseCategory'),
+          value: course.category.isNotEmpty ? course.category : course.subject,
+          hint: context.tr('courseCategoryHint'),
+          onChanged: (v) => onChanged(
+            course.copyWith(category: v, subject: v),
+          ),
         ),
         _LtrTextField(
           label: context.tr('courseName'),

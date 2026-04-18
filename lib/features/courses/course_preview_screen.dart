@@ -45,7 +45,7 @@ class _CoursePreviewScreenState extends State<CoursePreviewScreen> {
 
     pages.add(_PreviewPage(
       title: course.displayName,
-      subtitle: '${course.subject} • ${course.classId}',
+      subtitle: '${course.effectiveCategory} • ${course.classId}',
       content: course.purpose ?? context.tr('purposeNotSpecified'),
       icon: Icons.school,
     ));

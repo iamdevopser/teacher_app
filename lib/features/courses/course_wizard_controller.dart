@@ -21,6 +21,7 @@ class CourseWizardController extends ChangeNotifier {
       id: AppRepository.generateId(),
       name: '',
       subject: '',
+      category: '',
       classId: initialClassId ?? '',
       weeklyHours: 0,
       totalWeeks: 0,

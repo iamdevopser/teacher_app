@@ -307,7 +307,7 @@ class _TeachScreenState extends State<TeachScreen> {
                 value: _selectedCourse?.id,
                 isExpanded: true,
                 decoration: InputDecoration(
-                  labelText: context.tr('courses'),
+                  labelText: context.tr('pickCourse'),
                   border: const OutlineInputBorder(),
                 ),
                 items: courses
@@ -459,7 +459,7 @@ class _TeachScreenState extends State<TeachScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            '${course.subject} • ${course.classId}',
+            '${course.effectiveCategory} • ${course.classId}',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),

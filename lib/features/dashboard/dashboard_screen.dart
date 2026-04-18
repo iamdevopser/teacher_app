@@ -378,9 +378,9 @@ class _TodayLessonsList extends StatelessWidget {
               return ids.contains(item.classId);
             }).toList();
             final course = matching.isNotEmpty ? matching.first : null;
-            final subject = course?.subject ?? '';
-            final title = subject.isNotEmpty
-                ? '${item.classId} - $subject'
+            final cat = course?.effectiveCategory ?? '';
+            final title = cat.isNotEmpty
+                ? '${item.classId} - $cat'
                 : item.classId;
             final isCurrentLesson =
                 currentLesson > 0 && item.hour == currentLesson;

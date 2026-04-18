@@ -9,13 +9,12 @@ import '../../core/widgets/app_bar_actions.dart';
 import '../../data/models/course.dart';
 import '../../data/models/course_models.dart';
 import 'course_color_dialog.dart';
-import 'course_color_dialog.dart';
 import 'course_detail_screen.dart';
 import 'course_wizard_controller.dart';
 import 'course_wizard_screen.dart';
 import '../lesson_planner/planner_split_view.dart';
 
-/// Kurslar ekranı - kurs listesi, oluşturma ve detay
+/// Kurs oluşturma girişi — kurs listesi (kategoriye göre gruplu), oluşturma ve detay
 class CoursesScreen extends StatefulWidget {
   const CoursesScreen({super.key});
 
@@ -26,7 +25,7 @@ class CoursesScreen extends StatefulWidget {
 class _CoursesScreenState extends State<CoursesScreen> {
   final _searchController = TextEditingController();
   String? _filterClass;
-  String? _filterSubject;
+  String? _filterCategory;
   bool _showArchived = false;
   Course? _selectedCourse;
 
@@ -48,6 +47,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
             .where(
               (c) =>
                   c.name.toLowerCase().contains(q) ||
+                  c.effectiveCategory.toLowerCase().contains(q) ||
                   c.subject.toLowerCase().contains(q) ||
                   c.classId.toLowerCase().contains(q),
             )
@@ -56,8 +56,9 @@ class _CoursesScreenState extends State<CoursesScreen> {
       if (_filterClass != null && _filterClass!.isNotEmpty) {
         result = result.where((c) => c.classId == _filterClass).toList();
       }
-      if (_filterSubject != null && _filterSubject!.isNotEmpty) {
-        result = result.where((c) => c.subject == _filterSubject).toList();
+      if (_filterCategory != null && _filterCategory!.isNotEmpty) {
+        result =
+            result.where((c) => c.effectiveCategory == _filterCategory).toList();
       }
     }
     return result;
@@ -94,9 +95,9 @@ class _CoursesScreenState extends State<CoursesScreen> {
             .toSet()
             .toList()
           ..sort();
-    final allSubjects =
+    final allCategories =
         courses
-            .map((c) => c.subject)
+            .map((c) => c.effectiveCategory)
             .where((s) => s.isNotEmpty)
             .toSet()
             .toList()
@@ -104,7 +105,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(context.tr('myCourses')),
+        title: Text(context.tr('courses')),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -119,7 +120,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (FeatureFlags.courseSearchFilter)
-                  _buildSearchFilter(context, allClasses, allSubjects),
+                  _buildSearchFilter(context, allClasses, allCategories),
                 Expanded(
                   child: PlannerSplitView(
                     emptyState: filtered.isNotEmpty
@@ -145,62 +146,16 @@ class _CoursesScreenState extends State<CoursesScreen> {
                                   : context.tr('courseNoMatching'),
                             ),
                           )
-                        : ListView.builder(
+                        : ListView(
                             padding: const EdgeInsets.all(16),
-                            itemCount: filtered.length,
-                            itemBuilder: (context, i) {
-                              final course = filtered[i];
-                              final isSelected =
-                                  _selectedCourse?.id == course.id;
-                              return Card(
-                                margin: const EdgeInsets.only(bottom: 8),
-                                color: isSelected
-                                    ? Theme.of(context)
-                                          .colorScheme
-                                          .primaryContainer
-                                          .withValues(alpha: 0.35)
-                                    : null,
-                                child: ListTile(
-                                  leading: _buildCourseLeading(
-                                    context,
-                                    course,
-                                    repo,
-                                  ),
-                                  title: Text(course.displayName),
-                                  subtitle: Text(
-                                    '${profile?.schoolName ?? ''} • ${course.status.label(localeCode)}',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodySmall,
-                                  ),
-                                  trailing: isWide
-                                      ? const Icon(Icons.chevron_right)
-                                      : PopupMenuButton<String>(
-                                          icon: const Icon(Icons.more_vert),
-                                          onSelected: (v) => _onCourseAction(
-                                            context,
-                                            v,
-                                            course,
-                                            repo,
-                                          ),
-                                          itemBuilder: (_) =>
-                                              _buildCourseMenuItems(
-                                                context,
-                                                course,
-                                              ),
-                                        ),
-                                  onTap: () async {
-                                    if (course.status == CourseStatus.archived)
-                                      return;
-                                    if (isWide) {
-                                      setState(() => _selectedCourse = course);
-                                      return;
-                                    }
-                                    await _openCourseDetail(context, course);
-                                  },
-                                ),
-                              );
-                            },
+                            children: _buildCoursesGroupedByCategory(
+                              context,
+                              filtered,
+                              profile?.schoolName ?? '',
+                              localeCode,
+                              repo,
+                              isWide,
+                            ),
                           ),
                   ),
                 ),
@@ -214,10 +169,93 @@ class _CoursesScreenState extends State<CoursesScreen> {
     );
   }
 
+  /// Kategoriye göre gruplu liste: başlık + kurs kartları.
+  List<Widget> _buildCoursesGroupedByCategory(
+    BuildContext context,
+    List<Course> filtered,
+    String schoolName,
+    String localeCode,
+    AppRepository repo,
+    bool isWide,
+  ) {
+    final map = <String, List<Course>>{};
+    for (final c in filtered) {
+      final key = c.effectiveCategory.isEmpty ? '' : c.effectiveCategory;
+      map.putIfAbsent(key, () => []).add(c);
+    }
+    final keys = map.keys.toList()
+      ..sort((a, b) {
+        if (a.isEmpty && b.isNotEmpty) return 1;
+        if (b.isEmpty && a.isNotEmpty) return -1;
+        return a.compareTo(b);
+      });
+
+    final children = <Widget>[];
+    for (final key in keys) {
+      final title = key.isEmpty
+          ? context.tr('courseCategoryOther')
+          : key;
+      children.add(
+        Padding(
+          padding: EdgeInsets.only(
+            top: children.isEmpty ? 0 : 16,
+            bottom: 8,
+          ),
+          child: Text(
+            title,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+        ),
+      );
+      for (final course in map[key]!) {
+        final isSelected = _selectedCourse?.id == course.id;
+        children.add(
+          Card(
+            margin: const EdgeInsets.only(bottom: 8),
+            color: isSelected
+                ? Theme.of(context)
+                    .colorScheme
+                    .primaryContainer
+                    .withValues(alpha: 0.35)
+                : null,
+            child: ListTile(
+              leading: _buildCourseLeading(context, course, repo),
+              title: Text(course.displayName),
+              subtitle: Text(
+                '$schoolName • ${course.status.label(localeCode)}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              trailing: isWide
+                  ? const Icon(Icons.chevron_right)
+                  : PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_vert),
+                      onSelected: (v) =>
+                          _onCourseAction(context, v, course, repo),
+                      itemBuilder: (_) =>
+                          _buildCourseMenuItems(context, course),
+                    ),
+              onTap: () async {
+                if (course.status == CourseStatus.archived) return;
+                if (isWide) {
+                  setState(() => _selectedCourse = course);
+                  return;
+                }
+                await _openCourseDetail(context, course);
+              },
+            ),
+          ),
+        );
+      }
+    }
+    return children;
+  }
+
   Widget _buildSearchFilter(
     BuildContext context,
     List<String> allClasses,
-    List<String> allSubjects,
+    List<String> allCategories,
   ) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
@@ -265,9 +303,9 @@ class _CoursesScreenState extends State<CoursesScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: DropdownButtonFormField<String>(
-                  value: _filterSubject,
+                  value: _filterCategory,
                   decoration: InputDecoration(
-                    labelText: context.tr('courseFilterSubject'),
+                    labelText: context.tr('courseFilterCategory'),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 8,
@@ -278,11 +316,11 @@ class _CoursesScreenState extends State<CoursesScreen> {
                       value: null,
                       child: Text(context.tr('all')),
                     ),
-                    ...allSubjects.map(
+                    ...allCategories.map(
                       (s) => DropdownMenuItem(value: s, child: Text(s)),
                     ),
                   ],
-                  onChanged: (v) => setState(() => _filterSubject = v),
+                  onChanged: (v) => setState(() => _filterCategory = v),
                 ),
               ),
             ],
@@ -552,10 +590,10 @@ class _CoursesScreenState extends State<CoursesScreen> {
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 4),
-          Text('${course.classId} • ${course.subject}'),
+          Text('${course.classId} • ${course.effectiveCategory}'),
           const SizedBox(height: 16),
           _detailRow(context, context.tr('schoolName'), schoolName),
-          _detailRow(context, context.tr('subject'), course.subject),
+          _detailRow(context, context.tr('courseCategory'), course.effectiveCategory),
           _detailRow(context, context.tr('classLabel'), course.classId),
           _detailRow(
             context,

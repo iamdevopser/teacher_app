@@ -51,6 +51,7 @@ class DemoDataService {
         id: courseId,
         name: 'HARMONİ 1',
         subject: 'Müzik',
+        category: 'Müzik',
         classId: '5A',
         teacherName: 'Demo Öğretmen',
         purpose: 'Temel müzik ve ritim becerileri.',

@@ -90,7 +90,7 @@ List<Widget> buildReminderExtensionFields(
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
           value: linkedEntityId ?? courses.first.id,
-          decoration: InputDecoration(labelText: context.tr('courses')),
+          decoration: InputDecoration(labelText: context.tr('pickCourse')),
           items: courses
               .map((c) => DropdownMenuItem(
                     value: c.id,

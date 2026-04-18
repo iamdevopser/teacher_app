@@ -5,6 +5,8 @@ class Course {
   final String id;
   final String name;
   final String subject;
+  /// Kategori (ör. Türkçe, Matematik); eski kayıtlarda boş olabilir, gruplama için [subject] ile tamamlanır.
+  final String category;
   final String classId;
   final String? teacherName;
   final String? purpose;
@@ -22,6 +24,7 @@ class Course {
     required this.id,
     required this.name,
     required this.subject,
+    this.category = '',
     required this.classId,
     this.teacherName,
     this.purpose,
@@ -36,12 +39,23 @@ class Course {
     required this.updatedAt,
   });
 
-  String get displayName => name.isNotEmpty ? name : '$classId - $subject';
+  /// Liste ve filtrelerde kullanılan birleşik kategori metni.
+  String get effectiveCategory {
+    final c = category.trim();
+    if (c.isNotEmpty) return c;
+    return subject.trim();
+  }
+
+  String get displayName =>
+      name.isNotEmpty
+          ? name
+          : '$classId - ${effectiveCategory.isNotEmpty ? effectiveCategory : subject}';
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,
         'subject': subject,
+        'category': category,
         'classId': classId,
         'teacherName': teacherName,
         'purpose': purpose,
@@ -66,10 +80,13 @@ class Course {
       );
     }
 
+    final subjectStr = json['subject'] as String? ?? '';
+    final categoryStr = json['category'] as String? ?? '';
     return Course(
       id: json['id'] as String,
       name: json['name'] as String? ?? '',
-      subject: json['subject'] as String? ?? '',
+      subject: subjectStr,
+      category: categoryStr.isNotEmpty ? categoryStr : subjectStr,
       classId: json['classId'] as String? ?? '',
       teacherName: json['teacherName'] as String?,
       purpose: json['purpose'] as String?,
@@ -103,6 +120,7 @@ class Course {
     String? id,
     String? name,
     String? subject,
+    String? category,
     String? classId,
     String? teacherName,
     String? purpose,
@@ -120,6 +138,7 @@ class Course {
         id: id ?? this.id,
         name: name ?? this.name,
         subject: subject ?? this.subject,
+        category: category ?? this.category,
         classId: classId ?? this.classId,
         teacherName: teacherName ?? this.teacherName,
         purpose: purpose ?? this.purpose,

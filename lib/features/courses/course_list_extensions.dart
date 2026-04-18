@@ -35,7 +35,7 @@ class _CourseListWithFiltersState extends State<CourseListWithFilters> {
   final _searchController = TextEditingController();
   String _searchQuery = '';
   String? _filterClass;
-  String? _filterSubject;
+  String? _filterCategory;
   bool _showArchived = false;
 
   @override
@@ -53,14 +53,18 @@ class _CourseListWithFiltersState extends State<CourseListWithFilters> {
       final q = _searchQuery.toLowerCase();
       list = list.where((c) =>
           c.name.toLowerCase().contains(q) ||
+          c.effectiveCategory.toLowerCase().contains(q) ||
           c.subject.toLowerCase().contains(q) ||
           c.classId.toLowerCase().contains(q)).toList();
     }
     if (FeatureFlags.courseSearchFilter && _filterClass != null) {
       list = list.where((c) => c.classId == _filterClass).toList();
     }
-    if (FeatureFlags.courseSearchFilter && _filterSubject != null) {
-      list = list.where((c) => c.subject == _filterSubject).toList();
+    if (FeatureFlags.courseSearchFilter &&
+        _filterCategory != null &&
+        _filterCategory!.isNotEmpty) {
+      list =
+          list.where((c) => c.effectiveCategory == _filterCategory).toList();
     }
     return list;
   }
@@ -107,15 +111,15 @@ class _CourseListWithFiltersState extends State<CourseListWithFilters> {
                     ],
                     onChanged: (v) => setState(() => _filterClass = v),
                   ),
-                if (subjects.isNotEmpty)
+                if (categories.isNotEmpty)
                   DropdownButton<String>(
-                    value: _filterSubject,
-                    hint: Text(context.tr('subject')),
+                    value: _filterCategory,
+                    hint: Text(context.tr('courseFilterCategory')),
                     items: [
                       DropdownMenuItem(value: null, child: Text(context.tr('all'))),
-                      ...subjects.map((s) => DropdownMenuItem(value: s, child: Text(s))),
+                      ...categories.map((s) => DropdownMenuItem(value: s, child: Text(s))),
                     ],
-                    onChanged: (v) => setState(() => _filterSubject = v),
+                    onChanged: (v) => setState(() => _filterCategory = v),
                   ),
               ],
             ),
@@ -142,105 +146,149 @@ class _CourseListWithFiltersState extends State<CourseListWithFilters> {
   }
 
   Widget _buildList(BuildContext context, List<Course> courses) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: courses.length,
-      itemBuilder: (context, i) {
-        final course = courses[i];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          child: ListTile(
-            leading: const Icon(Icons.class_),
-            title: Text(course.displayName),
-            subtitle: Text(
-              '${widget.profile?.schoolName ?? ''} • ${course.status.label(widget.localeCode)}',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            trailing: PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert),
-              onSelected: (v) async {
-                if (v == 'delete') {
-                  final ok = await showDialog<bool>(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      title: Text(context.tr('deleteCourse')),
-                      content: Text(
-                        '${course.displayName}\n${context.tr('deleteCourseConfirm')}',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx, false),
-                          child: Text(context.tr('cancel')),
+    final map = <String, List<Course>>{};
+    for (final c in courses) {
+      final key = c.effectiveCategory.isEmpty ? '' : c.effectiveCategory;
+      map.putIfAbsent(key, () => []).add(c);
+    }
+    final keys = map.keys.toList()
+      ..sort((a, b) {
+        if (a.isEmpty && b.isNotEmpty) return 1;
+        if (b.isEmpty && a.isNotEmpty) return -1;
+        return a.compareTo(b);
+      });
+
+    final sectionChildren = <Widget>[];
+    for (final key in keys) {
+      final heading = key.isEmpty ? context.tr('courseCategoryOther') : key;
+      sectionChildren.add(
+        Padding(
+          padding: EdgeInsets.only(
+            top: sectionChildren.isEmpty ? 0 : 16,
+            bottom: 8,
+          ),
+          child: Text(
+            heading,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+        ),
+      );
+      for (final course in map[key]!) {
+        sectionChildren.add(
+          Card(
+            margin: const EdgeInsets.only(bottom: 8),
+            child: ListTile(
+              leading: const Icon(Icons.class_),
+              title: Text(course.displayName),
+              subtitle: Text(
+                '${widget.profile?.schoolName ?? ''} • ${course.status.label(widget.localeCode)}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              trailing: PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert),
+                onSelected: (v) async {
+                  if (v == 'delete') {
+                    final ok = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: Text(context.tr('deleteCourse')),
+                        content: Text(
+                          '${course.displayName}\n${context.tr('deleteCourseConfirm')}',
                         ),
-                        FilledButton(
-                          onPressed: () => Navigator.pop(ctx, true),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: Theme.of(ctx).colorScheme.error,
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: Text(context.tr('cancel')),
                           ),
-                          child: Text(context.tr('delete')),
-                        ),
+                          FilledButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: Theme.of(ctx).colorScheme.error,
+                            ),
+                            child: Text(context.tr('delete')),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (ok == true && context.mounted) {
+                      await widget.onDelete(course);
+                    }
+                  } else if (v == 'archive' && FeatureFlags.courseArchive) {
+                    await _toggleArchive(context, course);
+                  } else if (v == 'duplicate' && FeatureFlags.courseDuplication) {
+                    await _duplicateCourse(context, course);
+                  }
+                },
+                itemBuilder: (_) => [
+                  if (FeatureFlags.courseArchive)
+                    PopupMenuItem(
+                      value: 'archive',
+                      child: Row(
+                        children: [
+                          Icon(
+                            course.status == CourseStatus.archived
+                                ? Icons.unarchive
+                                : Icons.archive,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            course.status == CourseStatus.archived
+                                ? context.tr('unarchive')
+                                : context.tr('archive'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (FeatureFlags.courseDuplication)
+                    PopupMenuItem(
+                      value: 'duplicate',
+                      child: Row(
+                        children: [
+                          const Icon(Icons.copy, size: 20),
+                          const SizedBox(width: 8),
+                          Text(context.tr('duplicate')),
+                        ],
+                      ),
+                    ),
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.delete, size: 20),
+                        const SizedBox(width: 8),
+                        Text(context.tr('delete')),
                       ],
                     ),
-                  );
-                  if (ok == true && context.mounted) {
-                    await widget.onDelete(course);
-                  }
-                } else if (v == 'archive' && FeatureFlags.courseArchive) {
-                  await _toggleArchive(context, course);
-                } else if (v == 'duplicate' && FeatureFlags.courseDuplication) {
-                  await _duplicateCourse(context, course);
+                  ),
+                ],
+              ),
+              onTap: () async {
+                if (course.status == CourseStatus.archived &&
+                    !_showArchived) {
+                  return;
+                }
+                final refresh = await Navigator.push<bool>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => CourseDetailScreen(course: course),
+                  ),
+                );
+                if (refresh == true && context.mounted) {
+                  widget.onRefresh();
                 }
               },
-              itemBuilder: (_) => [
-                if (FeatureFlags.courseArchive)
-                  PopupMenuItem(
-                    value: 'archive',
-                    child: Row(
-                      children: [
-                        Icon(course.status == CourseStatus.archived ? Icons.unarchive : Icons.archive, size: 20),
-                        const SizedBox(width: 8),
-                        Text(course.status == CourseStatus.archived ? context.tr('unarchive') : context.tr('archive')),
-                      ],
-                    ),
-                  ),
-                if (FeatureFlags.courseDuplication)
-                  PopupMenuItem(
-                    value: 'duplicate',
-                    child: Row(
-                      children: [
-                        const Icon(Icons.copy, size: 20),
-                        const SizedBox(width: 8),
-                        Text(context.tr('duplicate')),
-                      ],
-                    ),
-                  ),
-                PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      const Icon(Icons.delete, size: 20),
-                      const SizedBox(width: 8),
-                      Text(context.tr('delete')),
-                    ],
-                  ),
-                ),
-              ],
             ),
-            onTap: () async {
-              if (course.status == CourseStatus.archived && !_showArchived) return;
-              final refresh = await Navigator.push<bool>(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => CourseDetailScreen(course: course),
-                ),
-              );
-              if (refresh == true && context.mounted) {
-                widget.onRefresh();
-              }
-            },
           ),
         );
-      },
+      }
+    }
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: sectionChildren,
     );
   }
 
