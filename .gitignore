@@ -68,5 +68,8 @@ linux/flutter/ephemeral/
 # Windows
 windows/flutter/ephemeral/
 
+# Local portable Windows builds / release drops (not for version control)
+Teacher_App_Windows_*/
+
 # Test / coverage
 .test_coverage.dart
