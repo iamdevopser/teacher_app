@@ -1,4 +1,4 @@
-# Teacher Planner
+# Teacher App
 
 Offline-first **Flutter** application for lesson planning, courses, guidance, and related teaching workflows—optional **Supabase** sync when you supply credentials at build time.
 
