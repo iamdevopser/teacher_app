@@ -1161,6 +1161,14 @@ class _Step3Activities extends StatelessWidget {
             }
             final quizLink = item['quizFileOrLink'] as String?;
             final hasQuizLink = type == 'quiz' && quizLink != null && quizLink.isNotEmpty;
+            final quizMode = item['quizMode'] as String? ?? 'manual';
+            final rawQuizQs = item['questions'];
+            var manualQuizQuestionCount = 0;
+            if (type == 'quiz' &&
+                quizMode == 'manual' &&
+                rawQuizQs is List) {
+              manualQuizQuestionCount = rawQuizQs.length;
+            }
             final docCount = instructionItems.length + (hasQuizLink ? 1 : 0);
             return Card(
               margin: const EdgeInsets.only(bottom: 8),
@@ -1170,6 +1178,13 @@ class _Step3Activities extends StatelessWidget {
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    if (manualQuizQuestionCount > 0)
+                      Chip(
+                        label: Text(
+                          '$manualQuizQuestionCount ${context.tr('quizQuestionsBadgeSuffix')}',
+                        ),
+                        visualDensity: VisualDensity.compact,
+                      ),
                     if (docCount > 0)
                       Chip(
                         label: Text('$docCount ${docCount == 1 ? context.tr('document') : context.tr('documents')}'),
@@ -1768,7 +1783,15 @@ class _Step3Activities extends StatelessWidget {
                       onChanged: (v) => setModalState(() => quizType = v ?? 'multipleChoice'),
                     ),
                     const SizedBox(height: 12),
-                    ...questions.asMap().entries.map((e) => _quizQuestionTile(ctx, setModalState, e.key, e.value, questions)),
+                    ...questions.asMap().entries.map(
+                          (e) => _QuizQuestionFieldCard(
+                            key: ObjectKey(e.value),
+                            questionMap: e.value,
+                            questionIndexDisplay: e.key + 1,
+                            onRemove: () =>
+                                setModalState(() => questions.remove(e.value)),
+                          ),
+                        ),
                     OutlinedButton.icon(
                       onPressed: () => setModalState(() => questions.add({
                         'question': '',
@@ -1821,10 +1844,72 @@ class _Step3Activities extends StatelessWidget {
     );
   }
 
-  Widget _quizQuestionTile(BuildContext ctx, StateSetter setModalState, int idx, Map<String, dynamic> q, List<Map<String, dynamic>> list) {
-    final question = q['question'] as String? ?? '';
-    final options = List<String>.from(q['options'] as List? ?? ['', '']);
-    final correctIndex = list[idx]['correctIndex'] as int? ?? 0;
+}
+
+/// Manuel quiz soruları: controller'lar tek sefer oluşturulur (LTR + kalıcı düzenleme).
+class _QuizQuestionFieldCard extends StatefulWidget {
+  const _QuizQuestionFieldCard({
+    super.key,
+    required this.questionMap,
+    required this.questionIndexDisplay,
+    required this.onRemove,
+  });
+
+  final Map<String, dynamic> questionMap;
+  final int questionIndexDisplay;
+  final VoidCallback onRemove;
+
+  @override
+  State<_QuizQuestionFieldCard> createState() => _QuizQuestionFieldCardState();
+}
+
+class _QuizQuestionFieldCardState extends State<_QuizQuestionFieldCard> {
+  late TextEditingController _questionCtrl;
+  late List<TextEditingController> _optionCtrls;
+
+  @override
+  void initState() {
+    super.initState();
+    _questionCtrl = TextEditingController(
+      text: widget.questionMap['question'] as String? ?? '',
+    );
+    _questionCtrl.addListener(_syncQuestion);
+    final opts = List<String>.from(
+      widget.questionMap['options'] as List? ?? ['', ''],
+    );
+    _optionCtrls = opts.map((o) {
+      final c = TextEditingController(text: o);
+      c.addListener(_syncOptions);
+      return c;
+    }).toList();
+  }
+
+  @override
+  void dispose() {
+    _questionCtrl.removeListener(_syncQuestion);
+    _questionCtrl.dispose();
+    for (final c in _optionCtrls) {
+      c.removeListener(_syncOptions);
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  void _syncQuestion() {
+    widget.questionMap['question'] = _questionCtrl.text;
+  }
+
+  void _syncOptions() {
+    widget.questionMap['options'] =
+        _optionCtrls.map((c) => c.text).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final correctRaw = widget.questionMap['correctIndex'] as int? ?? 0;
+    final maxIdx = _optionCtrls.isEmpty ? 0 : _optionCtrls.length - 1;
+    final groupValue = correctRaw.clamp(0, maxIdx);
+
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: Padding(
@@ -1836,42 +1921,59 @@ class _Step3Activities extends StatelessWidget {
               children: [
                 Expanded(
                   child: TextField(
-                    decoration: InputDecoration(labelText: '${ctx.tr('questionText')} ${idx + 1}'),
-                    controller: TextEditingController(text: question),
-                    onChanged: (v) => setModalState(() => list[idx]['question'] = v),
+                    textDirection: TextDirection.ltr,
+                    controller: _questionCtrl,
+                    decoration: InputDecoration(
+                      labelText:
+                          '${context.tr('questionText')} ${widget.questionIndexDisplay}',
+                    ),
                   ),
                 ),
-                IconButton(icon: const Icon(Icons.delete_outline), onPressed: () => setModalState(() => list.removeAt(idx))),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  onPressed: widget.onRemove,
+                ),
               ],
             ),
             const SizedBox(height: 8),
-            ...options.asMap().entries.map((e) => Row(
-              children: [
-                Radio<int>(
-                  value: e.key,
-                  groupValue: correctIndex,
-                  onChanged: (v) => setModalState(() => list[idx]['correctIndex'] = v ?? 0),
-                ),
-                Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(labelText: '${ctx.tr('answerOptions')} ${e.key + 1}'),
-                    controller: TextEditingController(text: e.value),
-                    onChanged: (v) => setModalState(() {
-                      final opts = List<String>.from(list[idx]['options'] as List? ?? ['', '']);
-                      opts[e.key] = v;
-                      list[idx]['options'] = opts;
-                    }),
+            ..._optionCtrls.asMap().entries.map((e) {
+              final idx = e.key;
+              final ctrl = e.value;
+              return Row(
+                children: [
+                  Radio<int>(
+                    value: idx,
+                    groupValue: groupValue,
+                    onChanged: (v) {
+                      setState(() {
+                        widget.questionMap['correctIndex'] = v ?? 0;
+                      });
+                    },
                   ),
-                ),
-              ],
-            )),
+                  Expanded(
+                    child: TextField(
+                      textDirection: TextDirection.ltr,
+                      controller: ctrl,
+                      decoration: InputDecoration(
+                        labelText:
+                            '${context.tr('answerOptions')} ${idx + 1}',
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }),
             TextButton.icon(
-              onPressed: () => setModalState(() {
-                final opts = List<String>.from(list[idx]['options'] as List? ?? ['', ''])..add('');
-                list[idx]['options'] = opts;
-              }),
+              onPressed: () {
+                setState(() {
+                  final c = TextEditingController();
+                  c.addListener(_syncOptions);
+                  _optionCtrls.add(c);
+                  _syncOptions();
+                });
+              },
               icon: const Icon(Icons.add, size: 18),
-              label: Text('${ctx.tr('answerOptions')} ekle'),
+              label: Text('${context.tr('answerOptions')} ekle'),
             ),
           ],
         ),

@@ -1,70 +1,55 @@
-Flutter Teacher App projesinde aşağıdaki geliştirmeleri yap:
+You are a senior Flutter engineer.
 
-----------------------------------
-1. ANA SIDEBAR (LEFT MENU)
-----------------------------------
-- "Kurslarım" ana menü ismini "Akademi" olarak değiştir
-- Route, navigation ve tüm referansları güncelle
+Fix the following two critical issues in my Flutter project WITHOUT using any external/on-demand services.
 
-----------------------------------
-2. COURSE SIDEBAR (2. SIDEBAR)
-----------------------------------
-- Kurs oluşturma ekranında kullanılan "category (Ders/Branş)" yapısını aynen burada kullan
+====================================
+ISSUE 1 — TEXT DIRECTION BUG
+====================================
+Problem:
+- When typing manually into TextField/TextFormField, text is written right-to-left (RTL)
+- But copy-paste works correctly
 
-Yeni yapı:
+Fix:
+- Force ALL input fields to use LTR (left-to-right)
+- Apply globally if possible
 
-- "Kategoriler" adlı ana klasör ekle (expandable)
-- Tüm kursları course.category alanına göre grupla
+Do:
+- Wrap app with Directionality(textDirection: TextDirection.ltr)
+OR
+- Set textDirection: TextDirection.ltr in all TextField/TextFormField
+- Ensure keyboard input behaves correctly
 
-UI hiyerarşisi:
-Kategoriler
-   → Türkçe (expandable)
-        → Kurs 1
-        → Kurs 2
-   → Matematik (expandable)
-        → Kurslar...
+====================================
+ISSUE 2 — QUIZ DATA NOT PERSISTING
+====================================
+Problem:
+- Quiz questions are created
+- But not visible after creation
+- Data is not being saved or loaded correctly
 
-Davranış:
-- ExpansionTile yapısı kullan
-- Kategori ve kurslar dinamik oluşturulsun
-- Kursa tıklanınca mevcut detail page açılsın
-- Boş kategori gösterme
-- State local yönetilsin (setState / Provider vs.)
+Fix:
+1. Identify where quiz data is stored (likely missing)
+2. Implement LOCAL persistence (NO backend)
 
-----------------------------------
-3. PLANLARIM SAYFASI - TABBAR FIX
-----------------------------------
-Sorun:
-TabBar’a tıklanınca içerik değişmiyor
+Use:
+- Hive OR shared_preferences (prefer Hive if structure is complex)
 
-Çözüm:
-- TabController düzgün bağlanmalı
-- TabBar + TabBarView senkron çalışmalı
-- Controller lifecycle doğru yönetilmeli (initState / dispose)
+Do:
+- Create Quiz model
+- Save questions locally when added
+- Load questions when screen opens
+- Ensure state updates UI immediately
 
-Beklenen:
-- Tab’a tıklayınca içerik anında değişmeli
-- Swipe ile de değişmeli (opsiyonel)
+====================================
+EXPECTED RESULT
+====================================
+- Text inputs always LTR
+- Quiz questions persist after app restart
+- Quiz list renders correctly
+- No empty state after adding questions
 
-----------------------------------
-4. PLANLARIM - BUTON İSİMLERİ
-----------------------------------
-Tüm alt menülerde aynı olan "Raporu Paylaş" butonunu dinamik hale getir:
-
-Kurallar:
-- Haftalık Program → "Haftalık Planı Paylaş"
-- Yıllık Plan → "Yıllık Planı Paylaş"
-- Günlük Plan → "Günlük Planı Paylaş"
-- Dokümanlar → "Dokümanı Paylaş"
-- Projeler → "Projeyi Paylaş"
-
-Teknik:
-- Hardcoded string kullanma
-- Aktif tab’a göre label üret (enum / map önerilir)
-
-----------------------------------
-5. GENEL
-----------------------------------
-- Mevcut mimariyi bozma
-- Ek servis / on-demand yapı kullanma
-- Kodları reusable ve scalable yaz
+====================================
+OUTPUT
+====================================
+- Show modified code files
+- Explain briefly what was fixed

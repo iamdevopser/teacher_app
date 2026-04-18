@@ -36,8 +36,11 @@ void main() async {
     startupError = e.toString();
   }
   runApp(
-    ProviderScope(
-      child: TeacherPlannerApp(startupError: startupError),
+    Directionality(
+      textDirection: TextDirection.ltr,
+      child: ProviderScope(
+        child: TeacherPlannerApp(startupError: startupError),
+      ),
     ),
   );
 }
@@ -56,6 +59,8 @@ class TeacherPlannerApp extends StatelessWidget {
         theme: AppTheme.lightThemeFor(compact: compact),
         darkTheme: AppTheme.darkThemeFor(compact: compact),
         debugShowCheckedModeBanner: false,
+        builder: (context, child) =>
+            Directionality(textDirection: TextDirection.ltr, child: child!),
         home: _StartupErrorScreen(error: startupError!),
       );
     }
