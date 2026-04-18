@@ -1,0 +1,12 @@
+# Bitbucket Pipelines — Flutter web (same pub get + build web as other configs)
+image: ghcr.io/cirruslabs/flutter:stable
+
+pipelines:
+  default:
+    - step:
+        name: Build Flutter Web
+        script:
+          - flutter pub get
+          - flutter build web --release
+        artifacts:
+          - build/web/**

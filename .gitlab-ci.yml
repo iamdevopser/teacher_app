@@ -1,0 +1,19 @@
+# GitLab CI — same commands as GitHub Actions / README (Flutter stable image aligns with docker/Dockerfile)
+stages:
+  - build
+
+variables:
+  GIT_STRATEGY: clone
+
+flutter:build-web:
+  stage: build
+  image: ghcr.io/cirruslabs/flutter:stable
+  script:
+    # Dependencies
+    - flutter pub get
+    # Release web bundle → build/web
+    - flutter build web --release
+  artifacts:
+    paths:
+      - build/web/
+    expire_in: 1 week

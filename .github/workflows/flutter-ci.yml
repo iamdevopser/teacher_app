@@ -1,0 +1,31 @@
+# Flutter Web CI — mirrors local docs: flutter pub get + flutter build web --release
+name: Flutter CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build-web:
+    runs-on: ubuntu-latest
+    steps:
+      # Clone the repo
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Install Flutter SDK (stable)
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      # Resolve Dart/Flutter packages
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Production bundle under build/web
+      - name: Build web (release)
+        run: flutter build web --release

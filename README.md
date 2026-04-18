@@ -24,12 +24,14 @@ Data stays on the device (**Hive**) by default. **Supabase** cloud sync is **opt
 ## Repository layout
 
 ```text
+.github/workflows/                         # GitHub Actions CI
 android/ ios/ linux/ macos/ windows/ web/   # platform runners
 lib/                                       # application code
 docs/                                      # Supabase SQL & setup
 docker/                                    # web image (Flutter build + nginx)
 run/                                       # helper scripts (Windows / APK)
 scripts/                                   # optional GitHub bootstrap
+.gitlab-ci.yml / bitbucket-pipelines.yml / Jenkinsfile   # optional CI on other hosts
 ```
 
 ## Quick start (copy-paste)
@@ -135,9 +137,18 @@ Otherwise add `origin` manually and push to `main`.
 - **Web:** upload `build/web` to any static host (S3, nginx, GitHub Pages, etc.).  
 - **Stores:** use your signing keys and store pipelines; do not commit keystores (see `.gitignore`).
 
-## CI/CD
+## CI/CD options
 
-No hosted CI is mandatory; you can add GitHub Actions or similar. Suggested checks: `flutter analyze`, `flutter test`, `flutter build web`.
+Configs are included so you can wire up a pipeline on your side; **nothing runs until your provider executes them**.
+
+| Platform | Config file |
+|----------|-------------|
+| GitHub Actions | `.github/workflows/flutter-ci.yml` |
+| GitLab CI | `.gitlab-ci.yml` |
+| Bitbucket Pipelines | `bitbucket-pipelines.yml` |
+| Jenkins | `Jenkinsfile` |
+
+All use the same steps: `flutter pub get` then `flutter build web --release` (same as this README). Optional: add `flutter analyze` / `flutter test` in your pipeline.
 
 ## Security
 
