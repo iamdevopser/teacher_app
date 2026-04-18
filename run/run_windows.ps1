@@ -1,6 +1,7 @@
-# Flutter Windows runner — always uses the folder where this script lives as project root
+# Flutter Windows runner — project root is the parent of this script folder (run/)
 $ErrorActionPreference = 'Stop'
-Set-Location -LiteralPath $PSScriptRoot
+$projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+Set-Location -LiteralPath $projectRoot
 
 if (-not (Get-Command flutter -ErrorAction SilentlyContinue)) {
     Write-Error 'flutter not found in PATH. Add the Flutter SDK bin folder to Path.'

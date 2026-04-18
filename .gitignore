@@ -1,6 +1,8 @@
 # Miscellaneous
 *.class
 *.log
+hs_err_pid*.log
+replay_pid*.log
 *.pyc
 *.swp
 .DS_Store
@@ -12,34 +14,59 @@
 .swiftpm/
 migrate_working_dir/
 
-# IntelliJ related
+# Secrets & local env (templates like .env.example are tracked)
+.env
+.env.*
+!.env.example
+
+# IntelliJ / editor
 *.iml
 *.ipr
 *.iws
 .idea/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
+# VS Code (uncomment if you do not want to share launch configs)
 #.vscode/
 
-# Flutter/Dart/Pub related
+# Flutter / Dart / Pub
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
 .flutter-plugins-dependencies
+.packages
 .pub-cache/
 .pub/
-/build/
-/coverage/
+build/
+coverage/
 
-# Symbolication related
+# Symbolication / obfuscation
 app.*.symbols
-
-# Obfuscation related
 app.*.map.json
 
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
+# Android
+/android/app/debug/
+/android/app/profile/
+/android/app/release/
+/android/.gradle/
+/android/local.properties
+*.jks
+*.keystore
+
+# iOS / macOS
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/Flutter.podspec
+**/macos/Flutter/ephemeral/
+
+# Web
+/web/*.js.deps
+/web/*.js.map
+
+# Linux
+linux/flutter/ephemeral/
+
+# Windows
+windows/flutter/ephemeral/
+
+# Test / coverage
+.test_coverage.dart

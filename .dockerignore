@@ -1,0 +1,14 @@
+.git
+.gitignore
+.dart_tool
+build
+**/build
+.env
+.env.*
+!.env.example
+**/.DS_Store
+**/*.iml
+.idea
+coverage
+**/android/.gradle
+**/android/**/hs_err*.log

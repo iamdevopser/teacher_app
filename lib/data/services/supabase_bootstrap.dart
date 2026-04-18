@@ -3,11 +3,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class SupabaseBootstrap {
   static const String _url = String.fromEnvironment(
     'SUPABASE_URL',
-    defaultValue: 'https://louwovfikbuyqopfmurn.supabase.co',
+    defaultValue: '',
   );
   static const String _anonKey = String.fromEnvironment(
     'SUPABASE_ANON_KEY',
-    defaultValue: 'sb_publishable_d7f6uF4p6jxLBnnObAl9bw_HSRlmFTA',
+    defaultValue: '',
   );
 
   static bool _initialized = false;
