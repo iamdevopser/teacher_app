@@ -221,7 +221,17 @@ class _AppContentState extends State<_AppContent> {
       darkTheme: AppTheme.darkThemeFor(compact: compact),
       themeMode: themeProvider.themeMode,
       locale: locale,
-      supportedLocales: const [Locale('tr'), Locale('en')],
+      supportedLocales: const [Locale('en'), Locale('tr')],
+      localeResolutionCallback: (deviceLocale, supported) {
+        final app = localeProvider.effectiveLocale;
+        for (final s in supported) {
+          if (s.languageCode == app.languageCode) return s;
+        }
+        return supported.firstWhere(
+          (l) => l.languageCode == 'en',
+          orElse: () => supported.first,
+        );
+      },
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
