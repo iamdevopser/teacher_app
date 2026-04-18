@@ -1,92 +1,93 @@
 # Teacher App
 
-Offline-first **Flutter** application for lesson planning, courses, guidance, and related teaching workflows—optional **Supabase** sync when you supply credentials at build time.
+Offline-first **Flutter** app for lesson planning, courses, guidance, and related teaching workflows.  
+Data stays on the device (**Hive**) by default. **Supabase** cloud sync is **optional** and only activates when you pass URL and anon key at build/run time.
 
 ## Tech stack
 
-- **Flutter** (Android, Windows, Web, and other supported targets)
-- **Hive** for local-first storage
-- **Supabase** (optional) for account sync — configured via `--dart-define`, not committed to the repo
-- **Docker** (optional) — nginx serving the production `web` build
+- **Flutter** — Android, Windows, Web, and other supported targets  
+- **Hive** — local-first storage  
+- **Supabase** (optional) — account sync via `--dart-define` (nothing secret is committed)  
+- **Docker** (optional) — serve the production web build with nginx  
 
-## Features (overview)
+## Prerequisites
 
-- Dashboard, lesson planner, courses wizard, students, reminders, guidance, Zümre, reports, and more (see `lib/features/`).
-- Settings include optional cloud sync when Supabase keys are provided in your build/run command.
+| Requirement | Details |
+|---------------|---------|
+| **Git** | To clone the repository. |
+| **Flutter SDK** | Dart **3.10.8+** (see `environment.sdk` in `pubspec.yaml`). Install via [Flutter install](https://docs.flutter.dev/get-started/install). |
+| **IDE (optional)** | VS Code or Android Studio with Flutter/Dart plugins. |
+| **Platform tools (optional)** | Android SDK / Xcode / Visual Studio workload only if you build for that platform. Run `flutter doctor` and fix what it reports. |
+| **Node.js** | Not used. |
+| **Docker** | Only for the [Docker](#docker-flutter-web) section. |
 
-## Requirements
-
-| Tool | Notes |
-|------|--------|
-| **Flutter** | SDK compatible with `environment.sdk` in `pubspec.yaml` (`^3.10.8` at time of writing). Run `flutter doctor`. |
-| **Dart** | Bundled with Flutter. |
-| **Node.js** | Not required for this project. |
-| **Docker** | Optional — only if you use the provided `docker/Dockerfile`. |
-
-## Repository layout (high level)
+## Repository layout
 
 ```text
 android/ ios/ linux/ macos/ windows/ web/   # platform runners
-lib/                                          # Dart application code
-docs/                                         # Supabase SQL & setup notes
-docker/                                       # Web image (nginx + Flutter build)
-run/                                          # Helper scripts (e.g. Windows / APK)
-scripts/                                      # GitHub bootstrap (optional)
+lib/                                       # application code
+docs/                                      # Supabase SQL & setup
+docker/                                    # web image (Flutter build + nginx)
+run/                                       # helper scripts (Windows / APK)
+scripts/                                   # optional GitHub bootstrap
 ```
 
-## Setup
+## Quick start (copy-paste)
+
+Replace the clone URL with **your** fork or the upstream repo URL. After `git clone`, the project folder name is **whatever the repository is named on GitHub** (this repo is usually cloned as `teacher_app`).
 
 ```bash
-git clone <your-fork-or-repo-url>
+git clone https://github.com/<YOUR_USERNAME_OR_ORG>/teacher_app.git
 cd teacher_app
+
 flutter pub get
+flutter doctor
 ```
 
-### Environment variables (Supabase sync)
-
-Do **not** commit real keys. Copy the template and fill values locally (or export variables in your shell):
+Run the app (pick a device from `flutter devices`):
 
 ```bash
-cp .env.example .env
-# Edit .env — used for your own reference; Flutter still needs --dart-define at build/run (see below).
+flutter run -d windows    # example: Windows desktop
+# or
+flutter run -d chrome     # example: web in Chrome
 ```
 
-For **sync** builds, pass (example):
-
-```bash
-flutter run --dart-define=SUPABASE_URL=https://YOUR_PROJECT.supabase.co \
-  --dart-define=SUPABASE_ANON_KEY=YOUR_ANON_KEY
-```
-
-See `docs/supabase_sync_setup.md` and `docs/supabase_sync_schema.sql`.
-
-## Run locally
-
-```bash
-# List devices
-flutter devices
-
-# Example: Windows
-flutter run -d windows
-
-# Example: Chrome (web)
-flutter run -d chrome
-```
-
-Helper (Windows, from repo root):
+**Windows helper** (from repo root — sets the correct project directory):
 
 ```powershell
 .\run\run_windows.ps1
 ```
 
-## Build
+### Works without Supabase
+
+You do **not** need Supabase for daily use. The app runs locally; sync features in Settings stay inactive until credentials are provided via `--dart-define`.
+
+### Optional: Supabase sync
+
+1. Create a project and run the SQL in `docs/supabase_sync_schema.sql` (see `docs/supabase_sync_setup.md`).  
+2. Pass keys only at **build/run** time (not via a committed `.env` file—Flutter does **not** load `.env` automatically):
 
 ```bash
-# Web (production bundle under build/web)
+flutter run \
+  --dart-define=SUPABASE_URL=https://YOUR_PROJECT.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=YOUR_ANON_KEY
+```
+
+3. **`.env.example`** is a human-readable checklist. You may copy it to `.env` for your own notes or shell exports; the Flutter tool still needs `--dart-define` (or your CI must inject the same values).
+
+## Build
+
+### Web
+
+```bash
 flutter build web --release
 ```
 
-Android APK (requires Supabase env vars for sync-enabled builds — see `run/run_apk.ps1` and `.env.example`):
+Output: `build/web/` (static files ready to host).
+
+### Android APK
+
+- **With optional sync (helper script)** — set variables, then:
 
 ```powershell
 $env:SUPABASE_URL="https://YOUR_PROJECT.supabase.co"
@@ -94,20 +95,24 @@ $env:SUPABASE_ANON_KEY="YOUR_ANON_KEY"
 .\run\run_apk.ps1
 ```
 
+- **Without Supabase** — use the standard Flutter command (no `--dart-define` required):
+
+```bash
+flutter build apk --release
+```
+
 ## Docker (Flutter Web)
 
-From the **repository root** (network required on first build to pull base images):
+Run from the **repository root** (downloads base images on first build):
 
 ```bash
 docker build -f docker/Dockerfile -t teacher-planner-web .
 docker run --rm -p 8080:80 teacher-planner-web
 ```
 
-Open `http://localhost:8080` — nginx serves `build/web` with SPA fallback.
+Open [http://localhost:8080](http://localhost:8080). Nginx serves the built `web` bundle with SPA routing support.
 
 ## Git workflow
-
-Typical commit and push:
 
 ```bash
 git add -A
@@ -123,26 +128,30 @@ export GITHUB_TOKEN=ghp_your_token
 bash scripts/github_repo_bootstrap.sh
 ```
 
-Otherwise add the remote manually and push to `main`.
+Otherwise add `origin` manually and push to `main`.
 
 ## Deployment
 
-- **Web:** use `build/web` on any static host (Firebase Hosting, S3 + CloudFront, nginx, etc.). Configure HTTPS and cache headers as needed.
-- **Mobile/desktop:** use your store / signing pipelines; do not commit keystore files (see `.gitignore`).
+- **Web:** upload `build/web` to any static host (S3, nginx, GitHub Pages, etc.).  
+- **Stores:** use your signing keys and store pipelines; do not commit keystores (see `.gitignore`).
 
 ## CI/CD
 
-No vendor-specific CI is included in-repo; add GitHub Actions, Codemagic, or your own pipeline as needed. Run `flutter test`, `flutter analyze`, and `flutter build web` in CI for regression checks.
+No hosted CI is mandatory; you can add GitHub Actions or similar. Suggested checks: `flutter analyze`, `flutter test`, `flutter build web`.
 
 ## Security
 
-- Real **Supabase URL and anon key** must not be committed. Defaults in code are empty; pass `--dart-define` or configure your build system.
-- Review `.gitignore` before pushing; never commit `.env` with secrets.
+- Do not commit real Supabase keys. Use `--dart-define` or CI secrets.  
+- Do not commit `.env` with secrets; it is listed in `.gitignore`.
+
+## Verified setup
+
+These steps match the **declared** SDK and layout in this repo (`pubspec.yaml`, Flutter tooling). A successful run depends on your machine: always run `flutter doctor` after install and resolve **platform** issues (Android licenses, Windows desktop enablement, Chrome for web, etc.). The maintainers verify `flutter pub get` and `flutter build web --release` against this configuration before releases.
 
 ## License / contributions
 
-Add a `LICENSE` if you distribute publicly; contribution guidelines optional.
+Add a `LICENSE` if you distribute publicly; contribution guidelines are optional.
 
 ---
 
-For first-time Flutter setup, see the [official Flutter installation guide](https://docs.flutter.dev/get-started/install).
+**Flutter install:** [docs.flutter.dev/get-started/install](https://docs.flutter.dev/get-started/install)
