@@ -232,7 +232,7 @@ class _ProjectsTabState extends State<ProjectsTab> {
               FilledButton.icon(
                 onPressed: () => _shareProjectAsPdf(p),
                 icon: const Icon(Icons.share),
-                label: Text(context.tr('shareReport')),
+                label: Text(context.tr('shareProject')),
               ),
               FilledButton.tonalIcon(
                 onPressed: () => _manageParticipants(p),
@@ -394,7 +394,7 @@ class _ProjectsTabState extends State<ProjectsTab> {
               Navigator.pop(ctx);
               _shareProjectAsPdf(p);
             },
-            label: Text(context.tr('shareReport')),
+            label: Text(context.tr('shareProject')),
           ),
           OutlinedButton(
             onPressed: () {

@@ -30,6 +30,9 @@ class _LessonPlannerScreenState extends State<LessonPlannerScreen> with SingleTi
       length: 5,
       vsync: this,
     );
+    _tabController.addListener(() {
+      if (mounted) setState(() {});
+    });
   }
 
   @override

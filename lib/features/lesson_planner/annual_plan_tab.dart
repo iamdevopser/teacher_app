@@ -167,7 +167,7 @@ class _AnnualPlanTabState extends State<AnnualPlanTab> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, 'share'),
-            child: Text(context.tr('shareReport')),
+            child: Text(context.tr('shareAnnualPlan')),
           ),
         ],
       ),
@@ -235,7 +235,7 @@ class _AnnualPlanTabState extends State<AnnualPlanTab> {
               ),
               PopupMenuButton<String>(
                 icon: const Icon(Icons.share),
-                tooltip: context.tr('shareReport'),
+                tooltip: context.tr('shareAnnualPlan'),
                 onSelected: (v) {
                   if (v == 'excel') _shareAsExcel();
                   else if (v == 'pdf') _shareAsPdf();

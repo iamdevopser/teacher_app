@@ -541,7 +541,7 @@ class _DailyLessonPlanTabState extends State<DailyLessonPlanTab> {
               FilledButton.icon(
                 onPressed: () => _sharePlan(plan),
                 icon: const Icon(Icons.share),
-                label: Text(context.tr('shareReport')),
+                label: Text(context.tr('shareDailyPlan')),
               ),
               FilledButton.icon(
                 onPressed: () => _showPlanFileDialog(plan),

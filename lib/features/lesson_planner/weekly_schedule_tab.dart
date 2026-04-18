@@ -260,7 +260,7 @@ class _WeeklyScheduleTabState extends State<WeeklyScheduleTab> {
               ),
               IconButton(
                 icon: const Icon(Icons.share),
-                tooltip: context.tr('shareReport'),
+                tooltip: context.tr('shareWeeklyPlan'),
                 onPressed: _schedule.isNotEmpty ? _shareSchedule : null,
               ),
             ],

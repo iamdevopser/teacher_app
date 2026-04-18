@@ -29,7 +29,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
   int _initialZumreTab = 0;
   int _initialNotDefterimTab = 0;
   bool _sidebarOpen = false;
-  bool _kurslarimExpanded = false;
+  bool _academyExpanded = false;
   bool _plansExpanded = false;
   bool _notDefterimExpanded = false;
   bool _guidanceExpanded = false;
@@ -104,7 +104,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
       if (notDefterimTab != null) {
         _initialNotDefterimTab = nextNd;
       }
-      if (index == 1 || index == 2) _kurslarimExpanded = true;
+      if (index == 1 || index == 2) _academyExpanded = true;
       if (index == 3) _plansExpanded = true;
       if (index == 4) _notDefterimExpanded = true;
       if (index == 5) _guidanceExpanded = true;
@@ -116,7 +116,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
   @override
   void initState() {
     super.initState();
-    _kurslarimExpanded = _selectedIndex == 1 || _selectedIndex == 2;
+    _academyExpanded = _selectedIndex == 1 || _selectedIndex == 2;
     _plansExpanded = _selectedIndex == 3;
     _notDefterimExpanded = _selectedIndex == 4;
     _guidanceExpanded = _selectedIndex == 5;
@@ -188,6 +188,12 @@ class _MainShellScreenState extends State<MainShellScreen> {
           children: List.generate(8, (i) {
             final page = screens[i];
             // Not Defterim: iç Navigator kaldırıldı (çift route + hızlı tıklamada jank).
+            if (i == 3) {
+              return KeyedSubtree(
+                key: ValueKey<String>(_screenPageKey(3)),
+                child: page,
+              );
+            }
             if (i == 4) {
               return KeyedSubtree(
                 key: const ValueKey<String>('indexed_not_defterim'),
@@ -291,10 +297,10 @@ class _MainShellScreenState extends State<MainShellScreen> {
                         titleKey: 'myCourses',
                         icon: Icons.menu_book,
                         selected: _selectedIndex == 1 || _selectedIndex == 2,
-                        expanded: _kurslarimExpanded,
+                        expanded: _academyExpanded,
                         onExpand: () => setState(() {
-                          _kurslarimExpanded = !_kurslarimExpanded;
-                          if (_kurslarimExpanded) {
+                          _academyExpanded = !_academyExpanded;
+                          if (_academyExpanded) {
                             _selectedIndex = 1;
                           }
                         }),

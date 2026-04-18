@@ -347,7 +347,7 @@ class _LessonDocumentsTabState extends State<LessonDocumentsTab> {
               FilledButton.icon(
                 onPressed: () => _shareDocument(doc),
                 icon: const Icon(Icons.share),
-                label: Text(context.tr('shareReport')),
+                label: Text(context.tr('shareDocument')),
               ),
               FilledButton.tonalIcon(
                 onPressed: () => _deleteDocument(doc),
