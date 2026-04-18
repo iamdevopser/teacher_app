@@ -107,10 +107,13 @@ Open `http://localhost:8080` — nginx serves `build/web` with SPA fallback.
 
 ## Git workflow
 
-Minimal sync script (bash):
+Typical commit and push:
 
 ```bash
-./git-sync.sh "chore: your message"
+git add -A
+git status
+git commit -m "chore: your message"
+git push origin main
 ```
 
 If `origin` is missing and you use a GitHub **personal access token** with `repo` scope:
