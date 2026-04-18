@@ -1,55 +1,84 @@
 You are a senior Flutter engineer.
 
-Fix the following two critical issues in my Flutter project WITHOUT using any external/on-demand services.
+My quiz feature has a critical bug:
+- I can create quiz questions
+- But they DO NOT appear after creation
+- The quiz content is always empty
 
-====================================
-ISSUE 1 — TEXT DIRECTION BUG
-====================================
-Problem:
-- When typing manually into TextField/TextFormField, text is written right-to-left (RTL)
-- But copy-paste works correctly
+You must DEBUG and FIX this completely.
 
-Fix:
-- Force ALL input fields to use LTR (left-to-right)
-- Apply globally if possible
+IMPORTANT:
+- Do NOT assume anything
+- TRACE the full data flow step-by-step
+- Fix root cause, not symptoms
+- Do NOT use any external/on-demand services
 
-Do:
-- Wrap app with Directionality(textDirection: TextDirection.ltr)
-OR
-- Set textDirection: TextDirection.ltr in all TextField/TextFormField
-- Ensure keyboard input behaves correctly
+========================================
+STEP 1 — TRACE DATA FLOW
+========================================
+Find:
+- Where questions are created
+- Where they are stored (if at all)
+- Where they should be loaded
 
-====================================
-ISSUE 2 — QUIZ DATA NOT PERSISTING
-====================================
-Problem:
-- Quiz questions are created
-- But not visible after creation
-- Data is not being saved or loaded correctly
+Add debug logs:
+- When question is added
+- When saved
+- When loaded
+- When UI renders
 
-Fix:
-1. Identify where quiz data is stored (likely missing)
-2. Implement LOCAL persistence (NO backend)
+Print actual data at each step
 
-Use:
-- Hive OR shared_preferences (prefer Hive if structure is complex)
+========================================
+STEP 2 — FIX DATA PERSISTENCE
+========================================
+If data is NOT saved:
+
+Implement local persistence using Hive
 
 Do:
 - Create Quiz model
-- Save questions locally when added
-- Load questions when screen opens
-- Ensure state updates UI immediately
+- Create Question model
+- Register adapters
+- Save quiz list to Hive box
+- Ensure data is written after each add
 
-====================================
-EXPECTED RESULT
-====================================
-- Text inputs always LTR
-- Quiz questions persist after app restart
-- Quiz list renders correctly
-- No empty state after adding questions
+========================================
+STEP 3 — FIX DATA LOADING
+========================================
+Ensure:
+- Data is loaded in initState or controller
+- Async loading is awaited properly
+- UI waits for data before rendering
 
-====================================
+========================================
+STEP 4 — FIX UI STATE
+========================================
+Ensure:
+- setState OR state management updates UI after adding question
+- No stale state
+- ListView uses correct data source
+
+========================================
+STEP 5 — VERIFY
+========================================
+After fix:
+- Add question → appears immediately
+- Restart app → still موجود
+- Quiz page → shows all questions
+
+========================================
+STEP 6 — FAILSAFE
+========================================
+If still not working:
+- Replace current logic with a clean working structure:
+  - Hive box: "quizzes"
+  - Store List<Question>
+  - Load once at app start
+
+========================================
 OUTPUT
-====================================
-- Show modified code files
-- Explain briefly what was fixed
+========================================
+- Show EXACTLY what was wrong
+- Show FIXED code
+- Keep solution minimal and clean

@@ -687,6 +687,7 @@ class _TeachScreenState extends State<TeachScreen> {
         );
       }
     } else if (type == 'quiz') {
+      final quizMode = item['quizMode'] as String? ?? 'manual';
       final quizLink = item['quizFileOrLink'] as String?;
       if (quizLink != null && quizLink.isNotEmpty) {
         final isUrl =
@@ -697,6 +698,45 @@ class _TeachScreenState extends State<TeachScreen> {
             'content': quizLink,
           }),
         );
+      }
+      final rawQs = item['questions'];
+      if (quizMode == 'manual' && rawQs is List) {
+        for (var i = 0; i < rawQs.length; i++) {
+          final raw = rawQs[i];
+          if (raw is! Map) continue;
+          final m = Map<String, dynamic>.from(raw);
+          final qText = m['question']?.toString() ?? '';
+          final opts = m['options'];
+          final ci = (m['correctIndex'] as int?) ?? 0;
+          final lines = <String>[];
+          if (opts is List) {
+            for (var j = 0; j < opts.length; j++) {
+              final mark = j == ci ? '✓ ' : '  ';
+              lines.add('$mark${opts[j]}');
+            }
+          }
+          children.add(
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${context.tr('questionText')} ${i + 1}',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  if (qText.isNotEmpty)
+                    Text(qText, style: Theme.of(context).textTheme.bodyMedium),
+                  if (lines.isNotEmpty)
+                    Text(
+                      lines.join('\n'),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                ],
+              ),
+            ),
+          );
+        }
       }
     }
     if (instructionItems.isNotEmpty) {
