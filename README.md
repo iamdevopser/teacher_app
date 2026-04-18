@@ -150,7 +150,23 @@ These steps match the **declared** SDK and layout in this repo (`pubspec.yaml`, 
 
 ## License / contributions
 
-Add a `LICENSE` if you distribute publicly; contribution guidelines are optional.
+## ⚠️ License & Usage
+
+This project is source-available for educational and portfolio purposes only.
+
+You are NOT allowed to:
+- Use this project for commercial purposes
+- Modify and redistribute this project
+- Sell or sublicense any part of this codebase
+
+Permission is required for:
+- Commercial use
+- Production deployment
+- Custom implementations
+
+For licensing or usage inquiries:
+
+👉 Contact me
 
 ---
 
