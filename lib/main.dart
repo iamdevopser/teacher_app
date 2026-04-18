@@ -16,6 +16,7 @@ import 'features/setup/language_screen.dart';
 import 'features/setup/setup_screen.dart';
 import 'features/main_shell/main_shell_screen.dart';
 import 'features/settings/settings_screen.dart';
+import 'features/courses/quiz_play_screen.dart';
 
 bool _isCompactDevice() {
   final view = WidgetsBinding.instance.platformDispatcher.views.first;
@@ -243,6 +244,18 @@ class _AppContentState extends State<_AppContent> {
         GlobalWidgetsLocalizations.delegate,
       ],
       home: home,
+      onGenerateRoute: (settings) {
+        final name = settings.name;
+        if (name != null && name.startsWith('/quiz/')) {
+          final id = name.length > 6 ? name.substring(6) : '';
+          if (id.isEmpty) return null;
+          return MaterialPageRoute<void>(
+            settings: settings,
+            builder: (context) => QuizByShareIdScreen(shareId: id),
+          );
+        }
+        return null;
+      },
       routes: {
         '/language': (context) => const LanguageScreen(),
         '/setup': (context) => const SetupScreen(),

@@ -13,6 +13,7 @@ import '../../core/utils/app_provider.dart';
 import '../../data/models/course.dart';
 import '../../data/repositories/app_repository.dart';
 import '../../data/models/course_models.dart';
+import '../courses/quiz_play_screen.dart';
 
 /// Ders Anlat ekranı - sidebar'da kurs listesi, içerik alanında kurs yayını
 class TeachScreen extends StatefulWidget {
@@ -611,6 +612,7 @@ class _TeachScreenState extends State<TeachScreen> {
                 title: Text('$title ($type)'),
                 children: _teachBuildActivityExpandContent(
                   context,
+                  course,
                   item,
                   instructionItems,
                 ),
@@ -637,6 +639,7 @@ class _TeachScreenState extends State<TeachScreen> {
 
   List<Widget> _teachBuildActivityExpandContent(
     BuildContext context,
+    Course course,
     Map<String, dynamic> item,
     List<Map<String, String>> instructionItems,
   ) {
@@ -737,6 +740,30 @@ class _TeachScreenState extends State<TeachScreen> {
             ),
           );
         }
+      }
+      if (canPlayEmbeddedCourseQuiz(item)) {
+        children.add(
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: FilledButton.icon(
+                icon: const Icon(Icons.play_arrow),
+                label: Text(context.tr('quizPlay')),
+                onPressed: () {
+                  Navigator.of(context).push<void>(
+                    MaterialPageRoute<void>(
+                      builder: (ctx) => QuizPlayScreen(
+                        quizData: Map<String, dynamic>.from(item),
+                        courseTitle: course.displayName,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
       }
     }
     if (instructionItems.isNotEmpty) {

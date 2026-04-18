@@ -1689,6 +1689,12 @@ class _Step3Activities extends StatelessWidget {
     final durationCtrl = TextEditingController(text: durationVal > 0 ? durationVal.toString() : '');
     int duration = durationVal;
     String? quizFileOrLink = existing?['quizFileOrLink'] as String?;
+    final quizShareId =
+        existing?['quizShareId'] as String? ?? AppRepository.generateId();
+    final existingTpq = existing?['timePerQuestion'] as int?;
+    final timePerQCtrl = TextEditingController(
+      text: (existingTpq != null && existingTpq > 0) ? '$existingTpq' : '',
+    );
     final rawQuestions = existing?['questions'];
     List<Map<String, dynamic>> questions = [];
     if (rawQuestions is List) {
@@ -1801,7 +1807,51 @@ class _Step3Activities extends StatelessWidget {
                       icon: const Icon(Icons.add),
                       label: Text(context.tr('addQuestion')),
                     ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${questions.length} ${context.tr('quizQuestionCountLabel')}',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
                   ],
+                  TextField(
+                    controller: timePerQCtrl,
+                    keyboardType: TextInputType.number,
+                    textDirection: TextDirection.ltr,
+                    decoration: InputDecoration(
+                      labelText: context.tr('quizTimePerQuestion'),
+                      hintText: context.tr('quizTimePerQuestionHint'),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: SelectableText(
+                          'teacherplanner://quiz/$quizShareId',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: context.tr('quizCopyShareLink'),
+                        icon: const Icon(Icons.copy),
+                        onPressed: () async {
+                          await Clipboard.setData(
+                            ClipboardData(
+                              text: 'teacherplanner://quiz/$quizShareId',
+                            ),
+                          );
+                          if (ctx.mounted) {
+                            ScaffoldMessenger.of(ctx).showSnackBar(
+                              SnackBar(
+                                content: Text(context.tr('quizLinkCopied')),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: durationCtrl,
@@ -1817,6 +1867,19 @@ class _Step3Activities extends StatelessWidget {
             TextButton(onPressed: () => Navigator.pop(ctx), child: Text(context.tr('cancel'))),
             FilledButton(
               onPressed: () {
+                if (quizMode == 'manual' && questions.isEmpty) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    SnackBar(content: Text(context.tr('quizNeedOneQuestion'))),
+                  );
+                  return;
+                }
+                final tpq = int.tryParse(timePerQCtrl.text.trim()) ?? 0;
+                if (tpq < 0) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    SnackBar(content: Text(context.tr('error'))),
+                  );
+                  return;
+                }
                 duration = int.tryParse(durationCtrl.text) ?? 0;
                 final item = {
                   'type': 'quiz',
@@ -1824,6 +1887,8 @@ class _Step3Activities extends StatelessWidget {
                   'quizMode': quizMode,
                   'quizType': quizType,
                   'duration': duration,
+                  'timePerQuestion': tpq,
+                  'quizShareId': quizShareId,
                   if (quizMode == 'file') 'quizFileOrLink': quizFileOrLink,
                   if (quizMode == 'manual') 'questions': questions,
                 };

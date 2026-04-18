@@ -12,6 +12,7 @@ import '../../data/services/course_file_storage_service.dart';
 import 'package:share_plus/share_plus.dart';
 import 'course_wizard_controller.dart';
 import 'course_wizard_screen.dart';
+import 'quiz_play_screen.dart';
 
 String _fmtHours(int minutes) {
   final h = minutes / 60;
@@ -29,6 +30,7 @@ IconData _activityIconForType(String type) {
 
 List<Widget> _buildActivityExpandContent(
   BuildContext context,
+  Course course,
   Map<String, dynamic> item,
   List<Map<String, String>> instructionItems,
 ) {
@@ -109,6 +111,30 @@ List<Widget> _buildActivityExpandContent(
           ),
         );
       }
+    }
+    if (canPlayEmbeddedCourseQuiz(item)) {
+      children.add(
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: FilledButton.icon(
+              icon: const Icon(Icons.play_arrow),
+              label: Text(context.tr('quizPlay')),
+              onPressed: () {
+                Navigator.of(context).push<void>(
+                  MaterialPageRoute<void>(
+                    builder: (ctx) => QuizPlayScreen(
+                      quizData: Map<String, dynamic>.from(item),
+                      courseTitle: course.displayName,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      );
     }
   }
   if (instructionItems.isNotEmpty) {
@@ -513,7 +539,7 @@ class CourseDetailScreen extends StatelessWidget {
                     child: ExpansionTile(
                       leading: Icon(_activityIconForType(type)),
                       title: Text('$title ($type)'),
-                      children: _buildActivityExpandContent(context, item, instructionItems),
+                      children: _buildActivityExpandContent(context, course, item, instructionItems),
                     ),
                   ),
                 );
